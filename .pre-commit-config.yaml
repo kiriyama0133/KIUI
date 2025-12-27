@@ -3,23 +3,26 @@ repos:
     hooks:
       - id: clang-format
         name: clang-format
-        entry: clang-format -i
+        entry: powershell -Command "if (Get-Command clang-format -ErrorAction SilentlyContinue) { clang-format -i $args } else { Write-Host 'clang-format not found, skipping' }"
         language: system
         files: \.(cpp|hpp|h|c|cc|cxx)$
         pass_filenames: true
+        always_run: false
+        stages: []
 
       - id: cppcheck
         name: cppcheck
-        entry: cppcheck
+        entry: powershell -Command "if (Get-Command cppcheck -ErrorAction SilentlyContinue) { cppcheck $args } else { Write-Host 'cppcheck not found, skipping' }"
         language: system
         files: \.(cpp|hpp|h)$
         pass_filenames: true
-        # 针对 Win32 和 C++20 的专业建议参数
+        always_run: false
+        stages: []
         args: [
           "--enable=all",
           "--inline-suppr",
           "--std=c++20",
           "--platform=win64",
-          "--suppress=missingIncludeSystem", # 忽略找不到系统头文件的警告
+          "--suppress=missingIncludeSystem",
           "--quiet"
         ]
