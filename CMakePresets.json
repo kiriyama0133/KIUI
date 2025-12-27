@@ -1,0 +1,16 @@
+{
+    "version": 3,
+    "configurePresets": [
+      {
+        "name": "classic-vcpkg",
+        "displayName": "Global vcpkg (Classic Mode)",
+        "generator": "Visual Studio 17 2022",
+        "architecture": "x64",
+        "binaryDir": "${sourceDir}/out/build/${presetName}",
+        "cacheVariables": {
+          "CMAKE_TOOLCHAIN_FILE": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake",
+          "VCPKG_TARGET_TRIPLET": "x64-windows"
+        }
+      }
+    ]
+  }

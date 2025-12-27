@@ -1,0 +1,25 @@
+repos:
+  - repo: local
+    hooks:
+      - id: clang-format
+        name: clang-format
+        entry: clang-format -i
+        language: system
+        files: \.(cpp|hpp|h|c|cc|cxx)$
+        pass_filenames: true
+
+      - id: cppcheck
+        name: cppcheck
+        entry: cppcheck
+        language: system
+        files: \.(cpp|hpp|h)$
+        pass_filenames: true
+        # 针对 Win32 和 C++20 的专业建议参数
+        args: [
+          "--enable=all",
+          "--inline-suppr",
+          "--std=c++20",
+          "--platform=win64",
+          "--suppress=missingIncludeSystem", # 忽略找不到系统头文件的警告
+          "--quiet"
+        ]
