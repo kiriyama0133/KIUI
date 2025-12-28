@@ -23,6 +23,13 @@ namespace KiUI{
             ShutdownPlatformSubsystems();
         }
 
+        float WindowManager::GetWindowContentScale(boost::shared_ptr<Window> window) const{
+            if (!window) return 1.0f;
+            float xScale, yScale = 1.0f;
+            glfwGetWindowContentScale(window->GetHandle(), &xScale, &yScale);
+            return xScale;
+        }
+
         bool WindowManager::InitializePlatformSubsystems(){
             glfwSetErrorCallback(GlfwErrorCallback);
             if(!glfwInit()){
@@ -37,30 +44,86 @@ namespace KiUI{
     }
         void WindowManager::ShutdownPlatformSubsystems(){
             trackedWindows_.clear();
+            // Terminate GLFW (it's safe to call even if not initialized)
             glfwTerminate();
+        }
+
+        void WindowManager::UpdateActiveWindow(boost::shared_ptr<Window> window, bool focused) {
+            if (!window) {
+                return; // 防止空指针访问
+            }
+            
+            if (focused) {
+                focusedWindow_ = window;
+            } else if (focusedWindow_ == window) {
+                focusedWindow_ = nullptr;
+            }
+            OnWindowFocusChanged(window, focused);
+        }
+
+        void WindowManager::PollMainThreadTasks() {
+            mainThreadContext_.poll();
+        }
+
+        void WindowManager::Show(boost::shared_ptr<Window> window){
+            glfwShowWindow(window->GetHandle());
+        }
+
+        void WindowManager::Hide(boost::shared_ptr<Window> window){
+            glfwHideWindow(window->GetHandle());
+        }
+
+        bool WindowManager::IsVisible(boost::shared_ptr<Window> window) const{
+            return glfwGetWindowAttrib(window->GetHandle(), GLFW_VISIBLE) != 0;
         }
 
         boost::shared_ptr<Window> WindowManager::CreateNativeWindow(
             const std::string& windowTitle,
             int width,
             int height,
-            bool isFrameless) {
-            
+            bool isFrameless,
+            bool initialShow) {
+            glfwDefaultWindowHints();
+            if (isFrameless){
+                glfwWindowHint(GLFW_DECORATED, GLFW_FALSE);
+            }
             GLFWwindow* glfwWindow = glfwCreateWindow(width, height, windowTitle.c_str(), nullptr, nullptr);
             if (!glfwWindow) {
                 std::cerr << "Failed to create GLFW window" << std::endl;
                 return nullptr;
             }
-
-            // 设置窗口属性
-            if (isFrameless) {
-                glfwSetWindowAttrib(glfwWindow, GLFW_DECORATED, GLFW_FALSE);
-            }
-
             // 创建 Window 对象并追踪
-            auto window = boost::make_shared<Window>(glfwWindow);
+            auto window = boost::make_shared<Window>(glfwWindow, isFrameless);
             trackedWindows_.push_back(window);
             
+            // 连接窗口的 DPI 变化信号到 WindowManager 的全局信号
+            // 这样外部可以监听所有窗口的 DPI 变化，也可以监听特定窗口的
+            boost::weak_ptr<Window> weakWin = window;
+            window->OnContentScaleChanged.connect([this, weakWin](float xScale, float yScale) {
+                if (auto pinnedWin = weakWin.lock()) {
+                    this->OnScreenScaleFactorChanged(pinnedWin, xScale, yScale);
+                }
+            });
+            
+            // 当窗口获得或失去焦点时，更新 WindowManager 的焦点窗口状态
+            window->OnFocusChanged.connect([this, weakWin](bool focused) {
+                if (auto pinnedWin = weakWin.lock()) {
+                    this->UpdateActiveWindow(pinnedWin, focused);
+                }
+            });
+            
+            if (initialShow){
+                glfwShowWindow(glfwWindow);
+            }
+            
+            // 检查窗口创建时的实际焦点状态（窗口显示后可能会自动获得焦点）
+            // 通过轮询一次事件来确保焦点回调被触发
+            glfwPollEvents();
+            
+            // 如果窗口已经有焦点，手动更新焦点状态（因为回调可能已经触发，但确保状态同步）
+            if (glfwGetWindowAttrib(glfwWindow, GLFW_FOCUSED)) {
+                UpdateActiveWindow(window, true);
+            }
             // 发出信号
             OnWindowCreated(window);
             
@@ -94,10 +157,8 @@ namespace KiUI{
             while (!shouldExit_ && !trackedWindows_.empty()){
                 // 处理 GLFW 事件
                 glfwPollEvents();
-                
                 // 处理异步任务队列（非阻塞）
                 mainThreadContext_.poll();
-                
                 // 更新和渲染所有窗口
                 for (auto it = trackedWindows_.begin(); it != trackedWindows_.end();){
                     auto& window = *it;
@@ -106,10 +167,13 @@ namespace KiUI{
                         it = trackedWindows_.erase(it);
                         continue;
                     }
+                    if (IsVisible(window)){
                     window->OnUpdate();
-                    window->OnRender();
+                        window->OnRender();
+                    }
                     ++it;
                 }
+                glfwSwapInterval(1); // enable vsync
             }
             
             isLoopRunning_ = false;

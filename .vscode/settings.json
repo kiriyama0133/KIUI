@@ -92,6 +92,18 @@
         "numeric": "cpp",
         "stdfloat": "cpp",
         "strstream": "cpp",
-        "variant": "cpp"
+        "variant": "cpp",
+        "*.ipp": "cpp",
+        "bitset": "cpp",
+        "cfenv": "cpp",
+        "cinttypes": "cpp",
+        "csetjmp": "cpp",
+        "fstream": "cpp",
+        "memory_resource": "cpp",
+        "ranges": "cpp",
+        "regex": "cpp",
+        "stack": "cpp",
+        "typeindex": "cpp",
+        "unordered_set": "cpp"
     }
 }
