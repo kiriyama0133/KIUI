@@ -10,14 +10,14 @@ KIUI aims to build a high-performance, cross-platform modern UI components libra
 
 ### Core Dependencies
 
-| Component | vcpkg Package | Cross-Platform Support | Notes |
+| Component | vcpkg Package | 
 |-----------|--------------|------------------------|-------|
-| **Window Management** | `glfw3` | ⭐⭐⭐⭐⭐ Excellent | The preferred choice for modern OpenGL/GLES window creation |
-| **Graphics API** | `angle` | ⭐⭐⭐⭐⭐ Excellent | Provides GLES 3.0 support on Windows |
-| **Layout Engine** | `yoga` | ⭐⭐⭐⭐⭐ Excellent | Facebook open-source, mature C++ bindings |
-| **Font Loading** | `freetype` | ⭐⭐⭐⭐⭐ Excellent | The underlying font parser used by almost all UI libraries |
-| **Text Shaping** | `harfbuzz` | ⭐⭐⭐⭐⭐ Excellent | Handles character spacing, ligatures, and complex scripts |
-| **Image Loading** | `stb` | ⭐⭐⭐⭐⭐ Excellent | Lightweight single-header library, recommended over heavyweight libpng/jpeg |
+| **Window Management** |creation |
+| **Graphics API** | `angle` |
+| **Layout Engine** | `yoga` | 
+| **Font Loading** | `freetype` | 
+| **Text Shaping** | `harfbuzz` |
+| **Image Loading** | `stb` | 
 
 ### Build Tools
 
@@ -153,14 +153,6 @@ wm.ShutdownPlatformSubsystems();
 - [ ] Freetype/HarfBuzz text rendering
 - [ ] STB image loading
 - [ ] UI component system
-
-## License
-
-[To be determined]
-
-## Contributing
-
-Issues and Pull Requests are welcome!
 
 ## Related Links
 
