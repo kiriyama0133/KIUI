@@ -16,6 +16,9 @@ find_package(Boost REQUIRED COMPONENTS system filesystem thread date_time)
 # 添加 Foundation 基础库子项目
 add_subdirectory(foundation)
 
+# 添加 Graphics 渲染层子项目
+add_subdirectory(graphics)
+
 include(CTest)
 enable_testing()
 

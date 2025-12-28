@@ -9,7 +9,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # 查找依赖
 # ANGLE (Almost Native Graphics Layer Engine) - 用于 OpenGL ES 到 DirectX 的桥接
-find_package(angle CONFIG QUIET)
+find_package(unofficial-angle CONFIG QUIET)
 
 # GLFW - 跨平台窗口和输入管理库（可选，如果 ANGLE 不提供窗口管理）
 find_package(glfw3 CONFIG QUIET)
@@ -50,8 +50,8 @@ target_link_libraries(Foundation PUBLIC
 )
 
 # 如果找到 ANGLE，链接它
-if(angle_FOUND)
-    target_link_libraries(Foundation PUBLIC angle::libEGL angle::libGLESv2)
+if(unofficial-angle_FOUND)
+    target_link_libraries(Foundation PUBLIC unofficial::angle::libEGL unofficial::angle::libGLESv2)
     target_compile_definitions(Foundation PUBLIC FOUNDATION_USE_ANGLE)
     message(STATUS "Foundation: Using ANGLE for graphics context")
 else()
@@ -149,6 +149,7 @@ enable_testing()
 add_executable(FoundationTests
     tests/main.cpp
     tests/test_window_manager.cpp
+    tests/test_window_focus.cpp
 )
 
 target_include_directories(FoundationTests PRIVATE
@@ -165,8 +166,8 @@ target_link_libraries(FoundationTests PRIVATE
 )
 
 # 如果找到 ANGLE，测试也需要链接
-if(angle_FOUND)
-    target_link_libraries(FoundationTests PRIVATE angle::libEGL angle::libGLESv2)
+if(unofficial-angle_FOUND)
+    target_link_libraries(FoundationTests PRIVATE unofficial::angle::libEGL unofficial::angle::libGLESv2)
 endif()
 
 # 如果找到 GLFW，测试也需要链接

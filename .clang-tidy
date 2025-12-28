@@ -1,0 +1,49 @@
+---
+# 检查规则配置
+Checks: >
+  -*,
+  bugprone-*,
+  cppcoreguidelines-*,
+  modernize-*,
+  performance-*,
+  readability-*,
+  -cppcoreguidelines-pro-type-vararg,
+  -cppcoreguidelines-pro-bounds-pointer-arithmetic,
+  -modernize-use-trailing-return-type,
+  -readability-braces-around-statements,
+  -readability-magic-numbers,
+  -readability-convert-member-functions-to-static
+
+# 将以下规则视为错误，强制修改才能编译通过
+WarningsAsErrors: 'bugprone-*,performance-*,modernize-use-nullptr'
+
+# 具体的检查项配置
+CheckOptions:
+  # 命名规范：强制符合你目前代码的风格
+  - key:             readability-identifier-naming.ClassCase
+    value:           PascalCase
+  - key:             readability-identifier-naming.FunctionCase
+    value:           PascalCase
+  - key:             readability-identifier-naming.MemberCase
+    value:           camelCase
+  - key:             readability-identifier-naming.MemberSuffix
+    value:           _
+  - key:             readability-identifier-naming.ParameterCase
+    value:           camelCase
+  - key:             readability-identifier-naming.NamespaceCase
+    value:           lower_case
+
+  # 现代化：强制使用 using 替代 typedef (对 .NET 开发者更友好)
+  - key:             modernize-use-using.IgnoreMacros
+    value:           true
+
+  # 性能：提醒你不要在循环里不必要地拷贝对象
+  - key:             performance-for-range-copy.WarnOnAllAutoReturnType
+    value:           true
+
+# 排除第三方库头文件的诊断信息
+HeaderFilterRegex: '^(?!.*(vcpkg_installed|externals|third_party|boost)).*'
+
+# 格式化兼容性
+FormatStyle: file
+---

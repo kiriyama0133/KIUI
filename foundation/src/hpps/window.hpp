@@ -1,14 +1,11 @@
 #ifndef WINDOW_HPP
 #define WINDOW_HPP
 #pragma once
-#include <memory>
-#include <vector>
 #include <string>
-#include <functional>
-#include <iostream>
 #include <GLFW/glfw3.h>
 #include <boost/signals2.hpp>
 #include <boost/asio.hpp>
+#include <iostream>
 
 // 前置声明
 struct GLFWwindow; 

@@ -1,0 +1,46 @@
+﻿CompileFlags:
+  Add:
+    # C++20 standard
+    - -std=c++20
+    # Enable C++20 standard library features
+    - -D__cpp_lib_to_address=201711L
+    # vcpkg include paths
+    - -IE:/vcpkg/vcpkg/installed/x64-windows/include
+    - -IE:/vcpkg/vcpkg/installed/x64-windows/include/boost
+    # Project include paths
+    - -IF:/WindowsAPI/foundation/src
+    - -IF:/WindowsAPI/foundation/src/hpps
+    - -IF:/WindowsAPI/graphics/include
+    - -IF:/WindowsAPI/SDK/include
+    # Windows SDK paths
+    - -D_WIN32_WINNT=0x0A00
+    - -DUNICODE
+    - -D_UNICODE
+    # MSVC compatibility
+    - -fms-compatibility
+    - -fms-extensions
+    # Boost
+    - -DBOOST_ALL_NO_LIB
+    # Foundation defines
+    - -DFOUNDATION_USE_ANGLE
+    - -DFOUNDATION_USE_GLFW
+    # Graphics defines
+    - -DGRAPHICS_USE_ANGLE
+    - -DGRAPHICS_USE_SKIA
+  Remove:
+    # Remove any conflicting flags
+    - -W*
+
+Diagnostics:
+  UnusedIncludes: Relaxed
+  MissingIncludes: Relaxed
+  Suppress:
+    - no_member_suggest  # Suppress "no member named 'X' in namespace 'std'" suggestions
+  
+Index:
+  Background: Build
+
+InlayHints:
+  Enabled: Yes
+  ParameterNames: Yes
+  DeducedTypes: Yes

@@ -1,7 +1,6 @@
 #include "hpps/window.hpp"
 #include "hpps/window_class.hpp"
 #include <iostream>
-#include <algorithm>
 namespace KiUI{
     namespace foundation{
 
@@ -83,7 +82,7 @@ namespace KiUI{
             int height,
             bool isFrameless,
             bool initialShow) {
-            glfwDefaultWindowHints();
+            glfwDefaultWindowHints(); // set the default window hints
             if (isFrameless){
                 glfwWindowHint(GLFW_DECORATED, GLFW_FALSE);
             }
