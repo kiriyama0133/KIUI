@@ -3,7 +3,11 @@
 #pragma once
 #include <boost/shared_ptr.hpp>
 #include <boost/signals2.hpp>
+#include <boost/optional.hpp>
+#include <boost/noncopyable.hpp>
+#include <boost/scoped_ptr.hpp>
 
+class GrDirectContext;
 namespace KiUI {
 namespace foundation {
     class Window;
@@ -15,17 +19,9 @@ namespace graphics {
  * @brief RenderContext: 渲染上下文管理类
  * 负责管理图形渲染相关的资源，包括渲染上下文创建、销毁和状态管理
  */
-class RenderContext {
+class RenderContext : boost::noncopyable {
 public:
-    /**
-     * @brief 构造函数
-     * @param window 关联的窗口对象
-     */
-    explicit RenderContext(boost::shared_ptr<foundation::Window> window);
-    
-    /**
-     * @brief 析构函数
-     */
+    RenderContext();
     ~RenderContext();
     
     /**
@@ -33,53 +29,40 @@ public:
      * @return 是否成功初始化
      */
     bool Initialize();
-    
     /**
-     * @brief 销毁渲染上下文
+     * @brief 资源释放
      */
     void Shutdown();
-    
+
     /**
-     * @brief 使渲染上下文成为当前上下文
-     * @return 是否成功
+     * @brief 获取 Skia 的 GPU 上下文。
+     * 所有的渲染表面（RenderSurface）都需要通过这个上下文来创建画布。
+     * @return Skia GPU 上下文指针，如果未初始化则返回 nullptr
      */
-    bool MakeCurrent();
-    
-    /**
-     * @brief 交换前后缓冲区
-     */
-    void SwapBuffers();
-    
-    /**
-     * @brief 获取关联的窗口
-     * @return 窗口对象的共享指针
-     */
-    boost::shared_ptr<foundation::Window> GetWindow() const { return window_; }
+    GrDirectContext* GetSkiaContext() const;
     
     /**
      * @brief 检查渲染上下文是否已初始化
-     * @return 是否已初始化
+     * @return 如果已初始化返回 true，否则返回 false
      */
-    bool IsInitialized() const { return initialized_; }
+    bool IsInitialized() const;
+    
+    // 内部接口：仅供 RenderSurface 调用，用于 EGL 握手
+    struct NativeHandles {
+        void* display;
+        void* context;
+        void* config;
+    };
     
     /**
-     * @brief 上下文创建完成信号
+     * @brief 获取原生 EGL 句柄（仅供 RenderSurface 使用）
+     * @return NativeHandles 结构体，包含 display、context 和 config
      */
-    boost::signals2::signal<void()> OnContextCreated;
-    
-    /**
-     * @brief 上下文销毁信号
-     */
-    boost::signals2::signal<void()> OnContextDestroyed;
+    NativeHandles GetNativeHandles() const;
 
 private:
-    boost::shared_ptr<foundation::Window> window_;
-    bool initialized_;
-    void* context_handle_;  // 平台相关的上下文句柄（EGLContext, HGLRC等）
-    
-    // 禁止拷贝和赋值
-    RenderContext(const RenderContext&) = delete;
-    RenderContext& operator=(const RenderContext&) = delete;
+    struct Impl;
+    boost::scoped_ptr<Impl> impl_;
 };
 
 } // namespace graphics

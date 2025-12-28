@@ -11,6 +11,7 @@ cmake_install.cmake
 !CMakeLists.txt
 !CMakePresets.json
 skia
+skia_d
 
 # Visual Studio
 .vs/
