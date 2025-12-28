@@ -1,8 +1,6 @@
 #ifndef RENDER_CONTEXT_HPP
 #define RENDER_CONTEXT_HPP
 #pragma once
-
-#include <memory>
 #include <boost/shared_ptr.hpp>
 #include <boost/signals2.hpp>
 

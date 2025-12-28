@@ -15,7 +15,6 @@ find_package(unofficial-angle CONFIG QUIET)
 # 设置 Skia 目录路径（相对于项目根目录）
 set(SKIA_DIR "${CMAKE_SOURCE_DIR}/skia" CACHE PATH "Path to Skia directory")
 set(SKIA_INCLUDE_DIR "${SKIA_DIR}/include")
-set(SKIA_LIB_DIR "${SKIA_DIR}/out")
 
 # 检查 Skia 头文件是否存在
 if(EXISTS "${SKIA_INCLUDE_DIR}/core/SkCanvas.h")
@@ -26,36 +25,76 @@ else()
     message(WARNING "Graphics: Skia headers not found at ${SKIA_INCLUDE_DIR}")
 endif()
 
-# 查找 Skia 库文件（支持多种可能的命名和位置）
+# 查找 Skia 库文件（支持多种构建配置）
 if(SKIA_FOUND)
-    # 可能的库文件名
-    set(SKIA_LIB_NAMES skia skia_shared)
-    
-    # 可能的库文件位置
-    set(SKIA_LIB_SEARCH_PATHS
-        "${SKIA_DIR}/out/Release"
-        "${SKIA_DIR}/out/Debug"
-        "${SKIA_DIR}/out/Release-x64"
-        "${SKIA_DIR}/out/Debug-x64"
-        "${SKIA_DIR}/out/Release-x86"
-        "${SKIA_DIR}/out/Debug-x86"
-        "${SKIA_DIR}/lib"
-        "${SKIA_DIR}/out/${CMAKE_BUILD_TYPE}"
-        "${SKIA_DIR}/out/${CMAKE_BUILD_TYPE}-${CMAKE_SYSTEM_PROCESSOR}"
-    )
-    
-    # 查找静态库
-    find_library(SKIA_LIB
-        NAMES ${SKIA_LIB_NAMES}
-        PATHS ${SKIA_LIB_SEARCH_PATHS}
-        PATH_SUFFIXES lib lib/${CMAKE_SYSTEM_PROCESSOR}
-        NO_DEFAULT_PATH
-    )
-    
-    if(SKIA_LIB)
-        message(STATUS "Graphics: Found Skia library at ${SKIA_LIB}")
+    # 根据构建类型和架构确定库文件路径
+    if(CMAKE_SIZEOF_VOID_P EQUAL 8)
+        set(SKIA_ARCH_SUFFIX "x64")
     else()
-        message(STATUS "Graphics: Skia library not found, will use header-only or link manually")
+        set(SKIA_ARCH_SUFFIX "x86")
+    endif()
+    
+    # 根据构建类型确定目录
+    if(CMAKE_BUILD_TYPE STREQUAL "Release" OR CMAKE_CONFIGURATION_TYPES)
+        set(SKIA_BUILD_DIR "${SKIA_DIR}/out/Release-${SKIA_ARCH_SUFFIX}")
+    else()
+        set(SKIA_BUILD_DIR "${SKIA_DIR}/out/Debug-${SKIA_ARCH_SUFFIX}")
+    endif()
+    
+    # 主要的 Skia 库文件
+    set(SKIA_LIB_PATH "${SKIA_BUILD_DIR}/skia.lib")
+    
+    # 检查库文件是否存在
+    if(EXISTS "${SKIA_LIB_PATH}")
+        set(SKIA_LIB "${SKIA_LIB_PATH}")
+        set(SKIA_LIB_DIR "${SKIA_BUILD_DIR}")
+        message(STATUS "Graphics: Found Skia library at ${SKIA_LIB}")
+        
+        # Skia 的依赖库（根据实际构建配置可能需要调整）
+        set(SKIA_DEPENDENCY_LIBS
+            "${SKIA_BUILD_DIR}/skcms.lib"
+            "${SKIA_BUILD_DIR}/freetype2.lib"
+            "${SKIA_BUILD_DIR}/harfbuzz.lib"
+            "${SKIA_BUILD_DIR}/libpng.lib"
+            "${SKIA_BUILD_DIR}/libjpeg.lib"
+            "${SKIA_BUILD_DIR}/libwebp.lib"
+            "${SKIA_BUILD_DIR}/zlib.lib"
+            "${SKIA_BUILD_DIR}/expat.lib"
+            "${SKIA_BUILD_DIR}/icu.lib"
+        )
+        
+        # 只添加存在的依赖库
+        set(SKIA_LINK_LIBS "${SKIA_LIB}")
+        foreach(dep_lib ${SKIA_DEPENDENCY_LIBS})
+            if(EXISTS "${dep_lib}")
+                list(APPEND SKIA_LINK_LIBS "${dep_lib}")
+            endif()
+        endforeach()
+        
+        message(STATUS "Graphics: Skia library directory: ${SKIA_LIB_DIR}")
+    else()
+        # 尝试其他可能的路径
+        set(SKIA_LIB_SEARCH_PATHS
+            "${SKIA_DIR}/out/Release"
+            "${SKIA_DIR}/out/Debug"
+            "${SKIA_DIR}/out/Release-x64"
+            "${SKIA_DIR}/out/Debug-x64"
+            "${SKIA_DIR}/lib"
+        )
+        
+        find_library(SKIA_LIB
+            NAMES skia skia_shared
+            PATHS ${SKIA_LIB_SEARCH_PATHS}
+            NO_DEFAULT_PATH
+        )
+        
+        if(SKIA_LIB)
+            message(STATUS "Graphics: Found Skia library at ${SKIA_LIB}")
+            get_filename_component(SKIA_LIB_DIR "${SKIA_LIB}" DIRECTORY)
+        else()
+            message(STATUS "Graphics: Skia library not found, will use header-only or link manually")
+            set(SKIA_LIB "")
+        endif()
     endif()
 endif()
 
@@ -94,8 +133,14 @@ endif()
 # 如果找到 Skia，链接它
 if(SKIA_FOUND)
     if(SKIA_LIB)
-        target_link_libraries(Graphics PUBLIC ${SKIA_LIB})
-        message(STATUS "Graphics: Linking Skia library")
+        # 链接 Skia 主库和依赖库（使用完整路径，不需要 target_link_directories）
+        if(SKIA_LINK_LIBS)
+            target_link_libraries(Graphics PUBLIC ${SKIA_LINK_LIBS})
+        else()
+            target_link_libraries(Graphics PUBLIC ${SKIA_LIB})
+        endif()
+        
+        message(STATUS "Graphics: Linking Skia library and dependencies")
     else()
         # 如果没有找到预编译库，可以手动指定库路径
         # 或者使用 header-only 模式（如果 Skia 支持）
