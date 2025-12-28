@@ -74,8 +74,10 @@ if (Test-Path $foundationTests) {
 
 # Install if requested
 if ($Install) {
+    $sdkDir = Join-Path $PSScriptRoot "SDK"
     Write-Host "Installing to SDK directory..." -ForegroundColor Cyan
-    cmake --install $buildDir --config $buildType
+    Write-Host "Install prefix: $sdkDir" -ForegroundColor Yellow
+    cmake --install $buildDir --config $buildType --prefix $sdkDir
     if ($LASTEXITCODE -ne 0) {
         Write-Error "Installation failed!"
         exit $LASTEXITCODE

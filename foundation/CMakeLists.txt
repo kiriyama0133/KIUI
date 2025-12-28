@@ -74,10 +74,6 @@ target_compile_definitions(Foundation PRIVATE
 )
 
 # ==================== 安装配置 ====================
-
-# 设置安装前缀为 SDK
-set(CMAKE_INSTALL_PREFIX "${CMAKE_SOURCE_DIR}/SDK" CACHE PATH "Installation directory")
-
 # 安装 Foundation 库
 install(TARGETS Foundation
     EXPORT FoundationTargets
@@ -88,8 +84,20 @@ install(TARGETS Foundation
 )
 
 # 安装头文件到 SDK/include
-install(DIRECTORY include/
-    DESTINATION include
+# 如果存在 include/ 目录，安装其中的头文件
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/include")
+    install(DIRECTORY include/
+        DESTINATION include
+        FILES_MATCHING 
+            PATTERN "*.h"
+            PATTERN "*.hpp"
+            PATTERN "*.inl"
+    )
+endif()
+
+# 安装 src/hpps/ 目录中的头文件到 SDK/include/foundation
+install(DIRECTORY src/hpps/
+    DESTINATION include/foundation
     FILES_MATCHING 
         PATTERN "*.h"
         PATTERN "*.hpp"
