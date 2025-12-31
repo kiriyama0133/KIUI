@@ -1,10 +1,24 @@
 #ifndef WINDOW_HPP
 #define WINDOW_HPP
+#include <vector>
 #pragma once
+
+// 在包含 Windows 头文件之前定义这些宏，避免与 boost/asio 冲突
+#ifdef _WIN32
+#ifndef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
+#endif
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+#endif
+
 #include <string>
-#include <GLFW/glfw3.h>
+// 先包含 boost/asio（它需要宏定义）
 #include <boost/signals2.hpp>
 #include <boost/asio.hpp>
+// 然后包含 GLFW（它会在内部包含 Windows.h，但此时宏已经定义）
+#include <GLFW/glfw3.h>
 #include <iostream>
 
 // 前置声明
@@ -24,8 +38,6 @@ class WindowManager {
 public:
     // 获取全局单例
     static WindowManager& GetSharedInstance();
-    // --- 框架生命周期管理 ---
-
     // 初始化图形子系统 (GLFW/ANGLE)
     bool InitializePlatformSubsystems();
     // 关闭子系统并释放资源

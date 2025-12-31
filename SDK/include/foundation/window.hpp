@@ -1,5 +1,6 @@
 #ifndef WINDOW_HPP
 #define WINDOW_HPP
+#include <vector>
 #pragma once
 #include <string>
 #include <GLFW/glfw3.h>
@@ -24,8 +25,6 @@ class WindowManager {
 public:
     // 获取全局单例
     static WindowManager& GetSharedInstance();
-    // --- 框架生命周期管理 ---
-
     // 初始化图形子系统 (GLFW/ANGLE)
     bool InitializePlatformSubsystems();
     // 关闭子系统并释放资源

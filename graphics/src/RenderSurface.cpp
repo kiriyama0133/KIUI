@@ -35,8 +35,6 @@ struct RenderSurface::Impl {
     int width_ = 0;
     int height_ = 0;
     bool initialized_ = false;
-    
-    // 当前帧的 canvas（用于 BeginFrame/EndFrame）
     SkCanvas* currentCanvas_ = nullptr;
 };
 
@@ -49,7 +47,6 @@ RenderSurface::RenderSurface(boost::shared_ptr<RenderContext> context,
 }
 
 RenderSurface::~RenderSurface() {
-    // 析构函数需要在这里定义，因为 Impl 的完整定义在这里可见
     Destroy();
 }
 
@@ -77,12 +74,28 @@ bool RenderSurface::Initialize() {
         return false;
     }
     
-    // 获取 Win32 HWND
-    HWND hwnd = glfwGetWin32Window(glfwWindow);
-    if (!hwnd) {
+    // 获取窗口句柄
+    #ifdef _WIN32
+    HWND windowHandle = glfwGetWin32Window(glfwWindow);
+    if (!windowHandle) {
         std::cerr << "RenderSurface: Failed to get Win32 window handle" << std::endl;
         return false;
     }
+    #endif
+    #ifdef __APPLE__
+    NSWindow* windowHandle = glfwGetCocoaWindow(glfwWindow);
+    if (!windowHandle) {
+        std::cerr << "RenderSurface: Failed to get NSWindow handle" << std::endl;
+        return false;
+    }
+    #endif
+    #ifdef __linux__
+    XWindow* windowHandle = glfwGetX11Window(glfwWindow);
+    if (!windowHandle) {
+        std::cerr << "RenderSurface: Failed to get XWindow handle" << std::endl;
+        return false;
+    }
+    #endif
     
     // 获取 EGL 原生句柄
     auto nativeHandles = impl_->context_->GetNativeHandles();
@@ -105,15 +118,13 @@ bool RenderSurface::Initialize() {
         return false;
     }
     
-    // 创建 EGLSurface（将 HWND 转换为 EGL 表面）
-    // 这是"魔法"的第一步：把 Win32 窗口句柄交给 EGL
+    // 创建 EGLSurface（将窗口句柄转换为 EGL 表面）
     EGLint surfaceAttributes[] = {
         EGL_NONE
     };
     
-    // 使用 ANGLE 的 Windows 平台扩展创建表面
-    // ANGLE 会自动处理 HWND 到 EGLSurface 的转换
-    impl_->eglSurface_ = eglCreateWindowSurface(display, config, hwnd, surfaceAttributes);
+    // 创建 EGLSurface
+    impl_->eglSurface_ = eglCreateWindowSurface(display, config, windowHandle, surfaceAttributes);
     
     if (impl_->eglSurface_ == EGL_NO_SURFACE) {
         EGLint error = eglGetError();
@@ -122,7 +133,7 @@ bool RenderSurface::Initialize() {
         return false;
     }
     
-    // 使 EGL 上下文成为当前上下文（绑定到我们的表面）
+    // 使 EGL 上下文成为当前上下文
     EGLContext context = static_cast<EGLContext>(nativeHandles.context);
     if (!eglMakeCurrent(display, impl_->eglSurface_, impl_->eglSurface_, context)) {
         EGLint error = eglGetError();
@@ -134,7 +145,6 @@ bool RenderSurface::Initialize() {
     }
     
     // 创建 Skia 表面（SkSurface）
-    // 这是"魔法"的第二步：把 EGLSurface 包装成 Skia 画布
     GrDirectContext* skiaContext = impl_->context_->GetSkiaContext();
     if (!skiaContext) {
         std::cerr << "RenderSurface: Skia context is null" << std::endl;
@@ -143,9 +153,9 @@ bool RenderSurface::Initialize() {
         return false;
     }
     
-    // 获取默认的 framebuffer（EGL 创建的）
+    // 获取默认的 framebuffer
     GrGLFramebufferInfo framebufferInfo;
-    framebufferInfo.fFBOID = 0; // 默认 framebuffer
+    framebufferInfo.fFBOID = 0;
     
     // 获取颜色格式
     EGLint redSize, greenSize, blueSize, alphaSize;
@@ -162,30 +172,23 @@ bool RenderSurface::Initialize() {
     
     framebufferInfo.fFormat = format;
     
-    // 创建 GrBackendRenderTarget（后端渲染目标）
-    // 注意：使用 kBottomLeft_GrSurfaceOrigin 来处理 OpenGL 坐标系（原点在左下角）
+    // 创建 GrBackendRenderTarget
     GrBackendRenderTarget backendRenderTarget = GrBackendRenderTargets::MakeGL(
         impl_->width_, 
         impl_->height_,
-        0, // sample count
-        0, // stencil bits
+        0,
+        0,
         framebufferInfo
     );
     
-    // 创建 SkSurface（Skia 的逻辑表面）
-    // 这是"魔法"的核心：把 EGL 的物理表面和 Skia 的逻辑画布连接起来
-    // 注意：使用 kBottomLeft_GrSurfaceOrigin 来处理 OpenGL 坐标系（原点在左下角）
-    // Skia 会自动处理与 Windows/Skia 坐标系（原点在左上角）的转换
-    // GrDirectContext* 继承自 GrRecordingContext*，但 clangd 可能无法识别，使用 reinterpret_cast 帮助类型推断
-    // 注意：这是安全的，因为 GrDirectContext 确实是 GrRecordingContext 的子类
     GrRecordingContext* recordingContext = reinterpret_cast<GrRecordingContext*>(skiaContext);
     impl_->skSurface_ = SkSurfaces::WrapBackendRenderTarget(
         recordingContext,
         backendRenderTarget,
-        kBottomLeft_GrSurfaceOrigin,  // OpenGL 坐标系：原点在左下角
-        kRGBA_8888_SkColorType,       // 颜色格式
-        nullptr,                      // 颜色空间（使用默认 sRGB）
-        nullptr                       // SurfaceProps（使用默认属性）
+        kBottomLeft_GrSurfaceOrigin,
+        kRGBA_8888_SkColorType,
+        nullptr,
+        nullptr
     );
     
     if (!impl_->skSurface_) {
@@ -204,7 +207,7 @@ bool RenderSurface::Initialize() {
 
 bool RenderSurface::Destroy() {
     if (!impl_->initialized_) {
-        return true; // 已经销毁或未初始化
+        return true;
     }
     
     // 释放 Skia 表面

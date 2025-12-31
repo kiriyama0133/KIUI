@@ -30,6 +30,7 @@ endif()
 add_library(Foundation STATIC
     src/window_manager.cpp
     src/window.cpp
+    src/logger.cpp
 )
 
 # 公共头文件目录（源文件中的 hpps 目录）
@@ -183,3 +184,30 @@ set_tests_properties(FoundationTests PROPERTIES
     TIMEOUT 60
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 )
+
+# ==================== 示例程序 ====================
+
+# 两个窗口示例程序
+add_executable(TwoWindows
+    examples/two_windows.cpp
+)
+
+target_include_directories(TwoWindows PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/src
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/hpps
+)
+
+target_link_libraries(TwoWindows PRIVATE
+    Foundation
+    ${WINDOWS_LIBS}
+)
+
+# 如果找到 ANGLE，示例程序也需要链接
+if(unofficial-angle_FOUND)
+    target_link_libraries(TwoWindows PRIVATE unofficial::angle::libEGL unofficial::angle::libGLESv2)
+endif()
+
+# 如果找到 GLFW，示例程序也需要链接
+if(glfw3_FOUND)
+    target_link_libraries(TwoWindows PRIVATE glfw)
+endif()

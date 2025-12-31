@@ -3,8 +3,8 @@
 #pragma once
 
 #include <GLFW/glfw3.h>
-#include <memory>
-#include <string>
+#include <array>
+#include <cmath>
 #include <boost/signals2.hpp>
 
 struct GLFWwindow;
@@ -20,7 +20,20 @@ class Window {
 public:
     Window(GLFWwindow* handle, bool isFrameless = false);
     ~Window();
-
+    static constexpr std::array<float, 8> PresetStepSizes = {0.25f, 0.5f, 0.75f, 1.0f, 1.25f, 1.5f, 1.75f, 2.0f};
+    static float SnapToNearestStep(float value) noexcept {
+        float bestStep = PresetStepSizes[0];
+        float minDiff = std::abs(value - bestStep);
+        for (std::size_t i = 0; i < PresetStepSizes.size(); ++i) {
+            float step = PresetStepSizes[i];
+            float diff = std::abs(value - step);  // 计算绝对差值
+            if (diff < minDiff) {  // 如果找到更接近的值
+                minDiff = diff;
+                bestStep = step;
+            }
+        }
+        return bestStep;  // 返回最接近的预设步长
+    }
     // 检查窗口是否应该关闭
     bool ShouldClose() const;
     

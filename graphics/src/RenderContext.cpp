@@ -6,6 +6,7 @@
 #include "RenderContext.hpp"
 #include "EGL/eglplatform.h"
 #include <iostream>
+#include <vector>
 #include <EGL/egl.h>
 #include <EGL/eglext.h>
 #include <EGL/eglext_angle.h>  // ANGLE 扩展头文件，包含 EGL_PLATFORM_ANGLE_TYPE_* 宏
@@ -32,15 +33,34 @@ namespace graphics {
 
     bool RenderContext::Initialize() {
         auto eglGetPlatformDisplayEXT = reinterpret_cast<PFNEGLGETPLATFORMDISPLAYEXTPROC>(eglGetProcAddress("eglGetPlatformDisplayEXT"));
-        const EGLint displayAttributes[] = {
-            EGL_PLATFORM_ANGLE_TYPE_ANGLE, EGL_PLATFORM_ANGLE_TYPE_D3D11_ANGLE,
-            EGL_PLATFORM_ANGLE_ENABLE_AUTOMATIC_TRIM_ANGLE, EGL_TRUE,
-            EGL_NONE
-        };
+        EGLint backendType = EGL_PLATFORM_ANGLE_TYPE_DEFAULT_ANGLE;
+        bool enableAutomaticTrim = false;
+        
+        #if defined(_WIN32)
+            backendType = EGL_PLATFORM_ANGLE_TYPE_D3D11_ANGLE;
+            enableAutomaticTrim = true;  // 只在 D3D11 后端启用自动 trim
+        #elif defined(__APPLE__)
+            backendType = EGL_PLATFORM_ANGLE_TYPE_METAL_ANGLE;
+        #elif defined(__linux__)
+            backendType = EGL_PLATFORM_ANGLE_TYPE_OPENGL_ANGLE;
+        #endif
+        
+        // 构建显示属性数组
+        std::vector<EGLint> displayAttributes;
+        displayAttributes.push_back(EGL_PLATFORM_ANGLE_TYPE_ANGLE);
+        displayAttributes.push_back(backendType);
+        
+        // 只在 D3D11 后端启用自动 trim（这是 ANGLE 的要求）
+        if (enableAutomaticTrim) {
+            displayAttributes.push_back(EGL_PLATFORM_ANGLE_ENABLE_AUTOMATIC_TRIM_ANGLE);
+            displayAttributes.push_back(EGL_TRUE);
+        }
+        
+        displayAttributes.push_back(EGL_NONE);
 
         impl_->display_ = eglGetPlatformDisplayEXT(EGL_PLATFORM_ANGLE_ANGLE, 
             EGL_DEFAULT_DISPLAY, 
-            displayAttributes);
+            displayAttributes.data());
 
         if (impl_->display_ == EGL_NO_DISPLAY) return false;
 

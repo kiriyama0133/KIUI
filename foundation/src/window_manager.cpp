@@ -1,3 +1,14 @@
+// 必须在任何 Windows 头文件之前定义这些宏，避免与 boost/asio 冲突
+#ifdef _WIN32
+#ifndef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
+#endif
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+#endif
+
+#include "logger.hpp"
 #include "hpps/window.hpp"
 #include "hpps/window_class.hpp"
 #include <iostream>
@@ -12,23 +23,19 @@ namespace KiUI{
             static WindowManager instance;
             return instance;
         }
-
         WindowManager::WindowManager() 
         : isLoopRunning_(false), shouldExit_(false){
             internalWorker_ = std::make_unique<io_worker>(boost::asio::make_work_guard(mainThreadContext_));
         }
-        
         WindowManager::~WindowManager() {
             ShutdownPlatformSubsystems();
         }
-
         float WindowManager::GetWindowContentScale(boost::shared_ptr<Window> window) const{
             if (!window) return 1.0f;
             float xScale, yScale = 1.0f;
             glfwGetWindowContentScale(window->GetHandle(), &xScale, &yScale);
             return xScale;
         }
-
         bool WindowManager::InitializePlatformSubsystems(){
             glfwSetErrorCallback(GlfwErrorCallback);
             if(!glfwInit()){
@@ -95,13 +102,17 @@ namespace KiUI{
             auto window = boost::make_shared<Window>(glfwWindow, isFrameless);
             trackedWindows_.push_back(window);
             
-            // 连接窗口的 DPI 变化信号到 WindowManager 的全局信号
-            // 这样外部可以监听所有窗口的 DPI 变化，也可以监听特定窗口的
             boost::weak_ptr<Window> weakWin = window;
             window->OnContentScaleChanged.connect([this, weakWin](float xScale, float yScale) {
                 if (auto pinnedWin = weakWin.lock()) {
                     this->OnScreenScaleFactorChanged(pinnedWin, xScale, yScale);
+                    #ifndef NDEBUG
+                    Logger::Debug("WindowManager::OnScreenScaleFactorChanged: xScale = {0}, yScale = {1}", xScale, yScale);
+                    #endif
                 }
+            });
+            // 窗口重绘
+            window->OnInvalidate.connect([this, weakWin]() {
             });
             
             // 当窗口获得或失去焦点时，更新 WindowManager 的焦点窗口状态
@@ -114,11 +125,9 @@ namespace KiUI{
             if (initialShow){
                 glfwShowWindow(glfwWindow);
             }
-            
             // 检查窗口创建时的实际焦点状态（窗口显示后可能会自动获得焦点）
             // 通过轮询一次事件来确保焦点回调被触发
             glfwPollEvents();
-            
             // 如果窗口已经有焦点，手动更新焦点状态（因为回调可能已经触发，但确保状态同步）
             if (glfwGetWindowAttrib(glfwWindow, GLFW_FOCUSED)) {
                 UpdateActiveWindow(window, true);
@@ -151,8 +160,7 @@ namespace KiUI{
         void WindowManager::EnterMainMessageLoop(){
             if (isLoopRunning_) return;
             isLoopRunning_ = true;
-            shouldExit_ = false;
-            
+            shouldExit_ = false;           
             while (!shouldExit_ && !trackedWindows_.empty()){
                 // 处理 GLFW 事件
                 glfwPollEvents();
@@ -172,9 +180,7 @@ namespace KiUI{
                     }
                     ++it;
                 }
-                glfwSwapInterval(1); // enable vsync
             }
-            
             isLoopRunning_ = false;
         }
 
