@@ -20,19 +20,28 @@ class Window {
 public:
     Window(GLFWwindow* handle, bool isFrameless = false);
     ~Window();
-    static constexpr std::array<float, 8> PresetStepSizes = {0.25f, 0.5f, 0.75f, 1.0f, 1.25f, 1.5f, 1.75f, 2.0f};
+    static constexpr std::array<float, 5> PresetStepSizes = {1.0f, 1.25f, 1.5f, 1.75f, 2.0f};
+    static constexpr float MinScale = 1.0f;
+    static constexpr float MaxScale = 2.0f;
+    
+    /**
+     * @brief 将缩放值对齐到最近的预设步长，并限制在 1.0f - 2.0f 范围内
+     * @param value 输入的缩放值
+     * @return 对齐后的缩放值，保证在 [MinScale, MaxScale] 范围内
+     */
     static float SnapToNearestStep(float value) noexcept {
+        float clampedValue = std::max(MinScale, std::min(MaxScale, value));
         float bestStep = PresetStepSizes[0];
-        float minDiff = std::abs(value - bestStep);
+        float minDiff = std::abs(clampedValue - bestStep);
         for (std::size_t i = 0; i < PresetStepSizes.size(); ++i) {
             float step = PresetStepSizes[i];
-            float diff = std::abs(value - step);  // 计算绝对差值
+            float diff = std::abs(clampedValue - step);  // 计算绝对差值
             if (diff < minDiff) {  // 如果找到更接近的值
                 minDiff = diff;
                 bestStep = step;
             }
         }
-        return bestStep;  // 返回最接近的预设步长
+        return bestStep;  // 返回最接近的预设步长（保证在 [MinScale, MaxScale] 范围内）
     }
     // 检查窗口是否应该关闭
     bool ShouldClose() const;
@@ -56,6 +65,9 @@ public:
     
     // 焦点变化信号（当窗口获得或失去焦点时触发）
     boost::signals2::signal<void(bool focused)> OnFocusChanged;
+    
+    // 窗口需要重绘信号（当窗口内容需要重新渲染时触发，如 DPI 变化）
+    boost::signals2::signal<void()> OnInvalidate;
 
 private:
     GLFWwindow* handle_;

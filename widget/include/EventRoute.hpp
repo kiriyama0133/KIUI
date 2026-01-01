@@ -100,27 +100,12 @@ public:
             return nullptr;
         }
 
-        // 检查可见性
-        if (!visual->GetVisibility()) {
-            return nullptr;
+        auto hit = visual->HitTest(x, y);
+        if (hit) {
+            return boost::dynamic_pointer_cast<widget::UIElement>(hit);
         }
-
-        // 执行命中测试
-        if (!visual->HitTest(x, y)) {
-            return nullptr;
-        }
-
-        // 递归检查子元素（从后往前，因为后面的元素在上层）
-        const auto& children = root->GetChildren();
-        for (auto it = children.rbegin(); it != children.rend(); ++it) {
-            auto hit = HitTest(*it, x, y);
-            if (hit) {
-                return hit;  // 返回最上层的命中元素
-            }
-        }
-
-        // 如果没有子元素被命中，返回当前元素
-        return root;
+        
+        return nullptr;
     }
 
 private:

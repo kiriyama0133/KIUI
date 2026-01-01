@@ -51,6 +51,18 @@ enum class BorderStyle{
     Right,
     All,
 };
+enum class Alignment{
+    Start,
+    Center,
+    End,
+    Stretch,
+};
+enum class Justification{
+    Start,
+    Center,
+    End,
+    Stretch,
+};
 class VisualElement : public UIElement {
 public:
     VisualElement();
@@ -108,6 +120,69 @@ public:
     * @return the height of the visual element
     */
     float GetHeight() const { return height_; }
+    /*
+    * @brief Set the left position of the visual element (relative to parent)
+    * @param left the left position
+    */
+    void SetLeft(float left);
+    /*
+    * @brief Get the left position of the visual element (relative to parent)
+    * @return the left position
+    */
+    float GetLeft() const { return left_; }
+    /*
+    * @brief Set the top position of the visual element (relative to parent)
+    * @param top the top position
+    */
+    void SetTop(float top);
+    /*
+    * @brief Get the top position of the visual element (relative to parent)
+    * @return the top position
+    */
+    float GetTop() const { return top_; }
+    /*
+    * @brief Set the alignment of the visual element (cross-axis alignment)
+    * @param alignment the alignment value
+    */
+    void SetAlignment(Alignment alignment);
+    /*
+    * @brief Get the alignment of the visual element
+    * @return the alignment value
+    */
+    Alignment GetAlignment() const { return alignment_; }
+    /*
+    * @brief Set the justification of the visual element (main-axis alignment)
+    * @param justification the justification value
+    */
+    void SetJustification(Justification justification);
+    /*
+    * @brief Get the justification of the visual element
+    * @return the justification value
+    */
+    Justification GetJustification() const { return justification_; }
+    /*
+    * @brief Calculate layout using Yoga layout engine
+    * @param parentWidth parent container width (for root, this is window width)
+    * @param parentHeight parent container height (for root, this is window height)
+    * @param parentPaddingLeft parent container's left padding
+    * @param parentPaddingTop parent container's top padding
+    */
+    void CalculateLayout(float parentWidth, float parentHeight, 
+                       float parentPaddingLeft = 0.0f, float parentPaddingTop = 0.0f);
+    /*
+    * @brief Update Yoga node properties from current VisualElement properties
+    */
+    void UpdateYogaNode();
+    /*
+    * @brief Add a child to the visual element (overrides UIElement::AddChild)
+    * @param child the child to add
+    */
+    void AddChild(boost::shared_ptr<UIElement> child);
+    /*
+    * @brief Remove a child from the visual element (overrides UIElement::RemoveChild)
+    * @param child the child to remove
+    */
+    void RemoveChild(boost::shared_ptr<UIElement> child);
     /*
     * @brief Set the margin of the visual element
     * @param edge the edge to set (Top/Bottom/Left/Right/All)
@@ -187,9 +262,26 @@ public:
     */
     SkColor GetForegroundColor() const { return foregroundColor_; }
     /*
-    * @brief Hit test the visual element
+    * @brief Convert this UIElement to VisualElement
+    * @return shared_ptr to this VisualElement
+    * @note Overrides UIElement::AsVisualElement() to avoid expensive dynamic_cast
     */
-    virtual bool HitTest(float x, float y) = 0;
+    virtual boost::shared_ptr<VisualElement> AsVisualElement() override;
+    /*
+    * @brief Hit test the visual element with parent-local coordinates
+    * @param x parent-local x coordinate
+    * @param y parent-local y coordinate
+    * @return the deepest hit VisualElement, or nullptr if not hit
+    */
+    virtual boost::shared_ptr<VisualElement> HitTest(float x, float y);
+    /*
+    * @brief Hit test the visual element with local coordinates
+    * @param x local x coordinate (relative to this element)
+    * @param y local y coordinate (relative to this element)
+    * @return true if the point hits this element, false otherwise
+    * @note Derived classes can override this to implement custom hit testing (e.g., circular, path-based)
+    */
+    virtual bool HitTestLocal(float x, float y) const;
     /*
     * @brief Render the visual element
     * @param canvas the canvas to render the visual element
@@ -237,8 +329,14 @@ protected:
     
     float width_ = 0.0f;
     float height_ = 0.0f;
+    float left_ = 0.0f;  // Position relative to parent (calculated by Yoga)
+    float top_ = 0.0f;   // Position relative to parent (calculated by Yoga)
     bool visible_ = true;
     SkMatrix transform_;
+    
+    // Layout properties
+    Alignment alignment_ = Alignment::Stretch;
+    Justification justification_ = Justification::Start;
 };
 
 } // namespace widget

@@ -1,12 +1,15 @@
 #ifndef UIELEMENT_HPP
 #define UIELEMENT_HPP
 #pragma once
-#include <smart_ptr/shared_ptr.hpp>
-#include <smart_ptr/enable_shared_from_this.hpp>
+#include <boost/shared_ptr.hpp>
+#include <boost/enable_shared_from_this.hpp>
 #include <vector>
 
 namespace KiUI {
 namespace widget {
+// Forward declaration
+class VisualElement;
+
 class UIElement : public boost::enable_shared_from_this<UIElement> {
     public:
     /*
@@ -35,11 +38,17 @@ class UIElement : public boost::enable_shared_from_this<UIElement> {
     */
     size_t GetChildrenCount() const { return Children_.size(); }
     /*
+    * @brief Convert this UIElement to VisualElement if possible
+    * @return shared_ptr to VisualElement if this is a VisualElement, nullptr otherwise
+    * @note This avoids expensive dynamic_cast operations in hot paths
+    */
+    virtual boost::shared_ptr<VisualElement> AsVisualElement() { return nullptr; }
+    /*
     * @brief Constructor
     * @return the UI element
     */
     UIElement();
-    ~UIElement();
+    virtual ~UIElement();
     UIElement(const UIElement& other) = delete; // copy constructor is deleted
     UIElement& operator=(const UIElement& other) = delete; // copy assignment operator is deleted
     

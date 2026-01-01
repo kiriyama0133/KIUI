@@ -41,6 +41,8 @@ endif()
 add_library(Graphics STATIC
     src/RenderContext.cpp
     src/RenderSurface.cpp
+    src/Shapes.cpp
+    src/Rectangle.cpp
 )
 
 target_include_directories(Graphics PUBLIC
