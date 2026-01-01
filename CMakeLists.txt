@@ -30,6 +30,9 @@ add_subdirectory(foundation)
 # 添加 Graphics 渲染层子项目
 add_subdirectory(graphics)
 
+# 添加 Widget UI 组件库子项目
+add_subdirectory(widget)
+
 include(CTest)
 enable_testing()
 

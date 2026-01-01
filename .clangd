@@ -28,6 +28,7 @@ CompileFlags:
     - -IF:/WindowsAPI/foundation/src
     - -IF:/WindowsAPI/foundation/src/hpps
     - -IF:/WindowsAPI/graphics/include
+    - -IF:/WindowsAPI/widget/include
     - -IF:/WindowsAPI/SDK/include
     # Tracy profiling library (header-only, fetched via FetchContent)
     - -isystem
