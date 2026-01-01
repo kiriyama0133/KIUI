@@ -9,11 +9,11 @@
 #include <vector>
 #include <EGL/egl.h>
 #include <EGL/eglext.h>
-#include <EGL/eglext_angle.h>  // ANGLE 扩展头文件，包含 EGL_PLATFORM_ANGLE_TYPE_* 宏
+#include <EGL/eglext_angle.h> 
 #include <GLES3/gl3.h>
-#include <core/SkRefCnt.h>  // Skia 引用计数，包含 sk_sp 模板
+#include <core/SkRefCnt.h>  
 #include <gpu/ganesh/GrDirectContext.h>
-#include <gpu/ganesh/gl/GrGLDirectContext.h>  // GrDirectContexts::MakeGL
+#include <gpu/ganesh/gl/GrGLDirectContext.h>  
 #include <gpu/ganesh/gl/GrGLInterface.h>
 #include <gpu/ganesh/gl/GrGLAssembleInterface.h>
 
@@ -38,7 +38,7 @@ namespace graphics {
         
         #if defined(_WIN32)
             backendType = EGL_PLATFORM_ANGLE_TYPE_D3D11_ANGLE;
-            enableAutomaticTrim = true;  // 只在 D3D11 后端启用自动 trim
+            enableAutomaticTrim = true; 
         #elif defined(__APPLE__)
             backendType = EGL_PLATFORM_ANGLE_TYPE_METAL_ANGLE;
         #elif defined(__linux__)
@@ -50,7 +50,7 @@ namespace graphics {
         displayAttributes.push_back(EGL_PLATFORM_ANGLE_TYPE_ANGLE);
         displayAttributes.push_back(backendType);
         
-        // 只在 D3D11 后端启用自动 trim（这是 ANGLE 的要求）
+        // D3D11 后端启用自动 trim
         if (enableAutomaticTrim) {
             displayAttributes.push_back(EGL_PLATFORM_ANGLE_ENABLE_AUTOMATIC_TRIM_ANGLE);
             displayAttributes.push_back(EGL_TRUE);

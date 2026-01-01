@@ -10,6 +10,17 @@ if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
     set(CMAKE_INSTALL_PREFIX "${CMAKE_SOURCE_DIR}/SDK" CACHE PATH "Installation directory" FORCE)
 endif()
 
+include(FetchContent)
+FetchContent_Declare(
+    tracy
+    GIT_REPOSITORY https://github.com/wolfpld/tracy.git
+    GIT_TAG v0.13.1
+    GIT_SHALLOW TRUE
+    GIT_PROGRESS TRUE
+)
+
+FetchContent_MakeAvailable(tracy)
+
 # 查找公共依赖
 find_package(Boost REQUIRED COMPONENTS system filesystem thread date_time)
 

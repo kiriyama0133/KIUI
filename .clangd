@@ -29,6 +29,9 @@ CompileFlags:
     - -IF:/WindowsAPI/foundation/src/hpps
     - -IF:/WindowsAPI/graphics/include
     - -IF:/WindowsAPI/SDK/include
+    # Tracy profiling library (header-only, fetched via FetchContent)
+    - -isystem
+    - F:/WindowsAPI/out/build/classic-vcpkg/_deps/tracy-src/public
     # Windows SDK paths
     - -D_WIN32_WINNT=0x0A00
     - -DUNICODE

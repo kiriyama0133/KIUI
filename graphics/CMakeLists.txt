@@ -20,10 +20,8 @@ endif()
 
 # 如果通过 vcpkg 找不到，尝试手动查找
 if(NOT unofficial-skia_FOUND AND NOT skia_FOUND AND NOT Skia_FOUND)
-    # 尝试从 vcpkg 安装目录查找 Skia 头文件
     if(DEFINED ENV{VCPKG_ROOT})
         set(VCPKG_INSTALLED_DIR "$ENV{VCPKG_ROOT}/installed/x64-windows")
-        # 检查多种可能的路径
         if(EXISTS "${VCPKG_INSTALLED_DIR}/include/gpu/GrDirectContext.h")
             set(SKIA_INCLUDE_DIR "${VCPKG_INSTALLED_DIR}/include")
             set(SKIA_FOUND TRUE)
@@ -50,7 +48,7 @@ target_include_directories(Graphics PUBLIC
     $<INSTALL_INTERFACE:include/graphics>
 )
 
-# 添加 Skia 包含目录（vcpkg 的 Skia 包将头文件放在 include/skia/include 目录下）
+# 添加 Skia 包含目录
 if(DEFINED ENV{VCPKG_ROOT})
     set(VCPKG_INSTALLED_DIR "$ENV{VCPKG_ROOT}/installed/x64-windows")
     # vcpkg 的 Skia 包的头文件在 include/skia/include 目录下
@@ -77,13 +75,10 @@ if(unofficial-angle_FOUND)
     message(STATUS "Graphics: Using ANGLE")
 endif()
 
-# 链接 Skia（vcpkg 会自动处理依赖库）
+# 链接 Skia
 if(unofficial-skia_FOUND)
-    # vcpkg 推荐使用 unofficial::skia::skia
     target_link_libraries(Graphics PUBLIC unofficial::skia::skia)
     target_compile_definitions(Graphics PUBLIC GRAPHICS_USE_SKIA)
-    # vcpkg 的 unofficial-skia 包设置的包含目录是 include/skia，但头文件实际在 include/skia/include
-    # 需要额外添加 include/skia/include 到包含目录
     if(DEFINED ENV{VCPKG_ROOT})
         set(VCPKG_INSTALLED_DIR "$ENV{VCPKG_ROOT}/installed/x64-windows")
         if(EXISTS "${VCPKG_INSTALLED_DIR}/include/skia/include")
@@ -146,13 +141,13 @@ target_include_directories(DrawTriangle PRIVATE
     ${CMAKE_SOURCE_DIR}/foundation/src/hpps
 )
 
-target_link_libraries(DrawTriangle PRIVATE Graphics Foundation)
+target_link_libraries(DrawTriangle PRIVATE Graphics Foundation TracyClient)
+# 启用 Tracy 内存追踪
+target_compile_definitions(DrawTriangle PRIVATE TRACY_ENABLE)
 
 if(WIN32)
     target_link_libraries(DrawTriangle PRIVATE opengl32)
 endif()
-
-# 注意：Skia 及其依赖库已通过 Graphics 库 PUBLIC 链接，无需重复链接
 
 # ==================== 安装配置 ====================
 install(TARGETS Graphics
