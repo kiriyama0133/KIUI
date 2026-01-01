@@ -10,9 +10,9 @@ KIUI aims to build a high-performance, cross-platform modern UI components libra
 
 ### Core Dependencies
 
-| Component | vcpkg Package | 
-|-----------|--------------|------------------------|-------|
-| **Window Management** |creation |
+| Component | vcpkg Package |
+|-----------|--------------|
+| **Window Management** | `glfw3` |
 | **Graphics API** | `angle` |
 | **Layout Engine** | `yoga` | 
 | **Font Loading** | `freetype` | 
@@ -37,6 +37,16 @@ WindowsAPI/
 │   ├── src/            # Source code
 │   │   ├── hpps/       # Header files
 │   │   └── *.cpp       # Implementation files
+│   ├── tests/          # Unit tests
+│   └── CMakeLists.txt  # Build configuration
+├── graphics/           # Graphics rendering layer
+│   ├── src/            # Source code
+│   ├── include/        # Header files
+│   └── CMakeLists.txt  # Build configuration
+├── widget/             # Widget UI component library
+│   ├── src/            # Source code
+│   ├── include/        # Header files
+│   ├── examples/       # Example code
 │   ├── tests/          # Unit tests
 │   └── CMakeLists.txt  # Build configuration
 ├── SDK/                # Installation directory (generated after build)
@@ -102,8 +112,13 @@ cmake --install out/build/classic-vcpkg --config Release
 ### Running Tests
 
 ```powershell
+# Foundation tests
 cd out/build/classic-vcpkg/foundation/Release
 .\FoundationTests.exe
+
+# Widget tests
+cd out/build/classic-vcpkg/widget/Release
+.\WidgetTests.exe
 ```
 
 ## Foundation Base Library
@@ -140,8 +155,58 @@ wm.EnterMainMessageLoop();
 wm.ShutdownPlatformSubsystems();
 ```
 
+## Widget UI Component Library
+
+Widget is the UI component library of KIUI, built on top of Yoga layout engine and Skia graphics library
+
+### Core Features
+
+#### High-Performance Hit Testing
+- Uses virtual function `AsVisualElement()` to avoid expensive `dynamic_cast`
+- Supports coordinate transformation with transform matrices (rotation, scaling)
+- Supports recursive search for multi-level nested elements
+- Supports layer handling for overlapping elements (later drawn on top)
+
+#### Flexible Layout System
+- Flexbox layout based on Yoga
+- Supports style properties like Margin, Padding, Border
+- Supports alignment and distribution configuration
+
+### Usage Example
+
+```cpp
+#include <widget/Box.hpp>
+#include <widget/SceneRenderer.hpp>
+
+using namespace KiUI::widget;
+
+// Create root container
+auto root = boost::make_shared<Box>();
+root->SetWidth(800.0f);
+root->SetHeight(600.0f);
+
+// Create child container
+auto child = boost::make_shared<Box>();
+child->SetLeft(100.0f);
+child->SetTop(100.0f);
+child->SetWidth(200.0f);
+child->SetHeight(200.0f);
+child->SetBackgroundColor(SK_ColorBLUE);
+root->AddChild(child);
+
+// Calculate layout
+root->CalculateLayout(800.0f, 600.0f);
+
+// Hit testing
+auto hit = root->HitTest(150.0f, 150.0f);
+if (hit) {
+    // Handle click event
+}
+```
+
 ## Development Roadmap
 
+### Foundation Base Library
 - [x] Foundation base library architecture
 - [x] WindowManager window management
 - [x] GLFW integration
@@ -149,10 +214,30 @@ wm.ShutdownPlatformSubsystems();
 - [ ] Swapchain management
 - [ ] Standardized input service
 - [ ] High-DPI support
-- [ ] Yoga layout engine integration
+
+### Graphics Rendering Layer
+- [x] Graphics rendering layer architecture
+- [x] Skia graphics library integration
+- [x] Render context management
+- [x] Basic shape drawing (rectangle, rounded rectangle)
+
+### Widget UI Component Library
+- [x] Widget component library architecture
+- [x] Yoga layout engine integration
+- [x] VisualElement base component
+- [x] Box container component
+- [x] Recursive hit testing system
+- [x] Transform matrix support (rotation, scaling)
+- [x] Scene renderer
+- [x] Event routing system
+- [x] Unit testing framework integration
+- [ ] More basic components (Text, Image, etc.)
+- [ ] Style system
+- [ ] Animation system
+
+### Text and Image
 - [ ] Freetype/HarfBuzz text rendering
 - [ ] STB image loading
-- [ ] UI component system
 
 ## Related Links
 
